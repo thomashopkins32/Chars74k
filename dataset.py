@@ -14,7 +14,8 @@ class Chars74k(Dataset):
         else:
             self.path = 'trainResized/'
         self.labels = pd.read_csv('trainLabels.csv', index_col='ID')
-    
+        self.transform = tv.transforms.ToTensor()
+
     def __getitem__(self, i):
         if self.test:
             i += 6285 # offset for file name
@@ -22,7 +23,7 @@ class Chars74k(Dataset):
         else:
             i += 1
             y = self.labels.loc[i]
-        image = Image(os.path.join(self.path, f'{i}.Bmp'))
-        tensor = tv.transforms.PILToTensor(image)
-        assert tensor.shape == (20, 20, 3)
+        image = Image.open(os.path.join(self.path, f'{i}.Bmp'))
+        tensor = self.transform(image) 
+        assert tensor.shape == (3, 20, 20)
         return tensor

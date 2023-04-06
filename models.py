@@ -7,6 +7,7 @@ NUM_CLASSES = 62
 
 class BaselineCNN(nn.Module):
     def __init__(self):
+        super().__init__()
         # 20 x 20 x 3
         self.conv1 = nn.Conv2d(3, 16, 3, padding=1),
         # 20 x 20 x 16

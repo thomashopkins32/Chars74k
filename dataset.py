@@ -1,5 +1,6 @@
 import os
 
+import matplotlib.pyplot as plt
 import pandas as pd
 from PIL import Image
 from torch.utils.data import Dataset
@@ -15,6 +16,8 @@ class Chars74k(Dataset):
             self.path = 'trainResized/'
         self.labels = pd.read_csv('trainLabels.csv', index_col='ID')
         self.transform = tv.transforms.ToTensor()
+        self.idx_to_char = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+        self.char_to_idx = {c: i for i, c in enumerate(self.idx_to_char)}
 
     def __getitem__(self, i):
         if self.test:
@@ -22,8 +25,11 @@ class Chars74k(Dataset):
             y = None
         else:
             i += 1
-            y = self.labels.loc[i]
-        image = Image.open(os.path.join(self.path, f'{i}.Bmp'))
+            y = self.char_to_idx[self.labels.loc[i].item()]
+        image = Image.open(os.path.join(self.path, f'{i}.Bmp')).convert('RGB')
         tensor = self.transform(image) 
         assert tensor.shape == (3, 20, 20)
-        return tensor
+        return tensor, y
+
+    def __len__(self):
+        return len(self.labels)

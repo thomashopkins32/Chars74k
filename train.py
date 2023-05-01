@@ -12,29 +12,29 @@ from utils import *
 
 # PARAMETERS
 BATCH_SIZE = 64
-LR = 0.1
-WD = 1e-8
+LR = 0.05
+WD = 3e-4
 MOMENTUM = 0.9
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 VALID_STEP = 10
-RNG = 32
-EPOCHS = 300
+RNG = 12
+EPOCHS = 500
 
-SHOW_MODEL = True
+SHOW_MODEL = False
 SHOW_SAMPLES = False
 
 torch.manual_seed(RNG)
 
-writer = SummaryWriter()
+writer = SummaryWriter(max_queue=1000, flush_secs=300)
 dataset = Chars74k(test=False)
 generator = torch.Generator().manual_seed(RNG)
 train_data, valid_data = random_split(dataset, [0.9, 0.1], generator=generator)
-train_loader = DataLoader(train_data, batch_size=BATCH_SIZE, shuffle=True)
-valid_loader = DataLoader(valid_data, batch_size=len(valid_data), shuffle=False)
+train_loader = DataLoader(train_data, batch_size=BATCH_SIZE, shuffle=True, pin_memory=True)
+valid_loader = DataLoader(valid_data, batch_size=len(valid_data), shuffle=False, pin_memory=True)
 model = CNNv2().to(DEVICE)
 loss_func = nn.CrossEntropyLoss()
 optimizer = optim.SGD(model.parameters(), lr=LR, weight_decay=WD, momentum=MOMENTUM)
-scheduler = optim.lr_scheduler.MultiStepLR(optimizer, [20, 100, 200], 0.1, verbose=False)
+scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max')
 global_step = 0
 
 if SHOW_MODEL:
@@ -54,23 +54,27 @@ for e in tqdm(range(EPOCHS)):
     for i, (x, y) in enumerate(train_loader):
         x = x.to(DEVICE)
         y = y.long().to(DEVICE)
-
         logits = model(x)
         loss = loss_func(logits, y)
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
+        writer.add_scalar("Loss/train", loss.item(), global_step)
+        writer.add_scalar("Accuracy/train", accuracy(logits, y), global_step)
 
         if i % VALID_STEP == 0:
             global_step += 1
-            writer.add_scalar("Loss/train", loss.item(), global_step)
-            writer.add_scalar("Accuracy/train", accuracy(logits, y), global_step)
-            for i, (x, y) in enumerate(valid_loader):
-                x = x.to(DEVICE)
-                y = y.to(DEVICE)
-                logits = model(x)
-                loss = loss_func(logits, y)
-                writer.add_scalar("Loss/valid", loss.item(), global_step)
-                writer.add_scalar("Accuracy/valid", accuracy(logits, y), global_step)
-    scheduler.step()
+    model.eval()
+    dataset.eval()
+    for i, (x, y) in enumerate(valid_loader):
+        x = x.to(DEVICE)
+        y = y.to(DEVICE)
+        logits = model(x)
+        loss = loss_func(logits, y)
+        acc = accuracy(logits, y)
+        writer.add_scalar("Loss/valid", loss.item(), global_step)
+        writer.add_scalar("Accuracy/valid", acc, global_step)
+    model.train()
+    dataset.train()
+    scheduler.step(acc)
 writer.close()

@@ -1,6 +1,7 @@
 import torch
 import torch.optim as optim
 import torch.nn as nn
+import torchvision.models as models
 from torch.utils.data import DataLoader, random_split
 from torch.utils.tensorboard import SummaryWriter
 import torchvision
@@ -11,14 +12,14 @@ from models import *
 from utils import *
 
 # PARAMETERS
-BATCH_SIZE = 64
-LR = 0.05
-WD = 3e-4
-MOMENTUM = 0.9
+BATCH_SIZE = 32
+LR = 0.001
+WD = 0.0
+MOMENTUM = 0.0
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 VALID_STEP = 10
-RNG = 12
-EPOCHS = 500
+RNG = 32
+EPOCHS = 50
 
 SHOW_MODEL = False
 SHOW_SAMPLES = False
@@ -31,10 +32,10 @@ generator = torch.Generator().manual_seed(RNG)
 train_data, valid_data = random_split(dataset, [0.9, 0.1], generator=generator)
 train_loader = DataLoader(train_data, batch_size=BATCH_SIZE, shuffle=True, pin_memory=True)
 valid_loader = DataLoader(valid_data, batch_size=len(valid_data), shuffle=False, pin_memory=True)
-model = CNNv2().to(DEVICE)
+model = CNNv3().to(DEVICE)
 loss_func = nn.CrossEntropyLoss()
-optimizer = optim.SGD(model.parameters(), lr=LR, weight_decay=WD, momentum=MOMENTUM)
-scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max')
+optimizer = optim.Adam(model.parameters(), lr=LR)
+#scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max')
 global_step = 0
 
 if SHOW_MODEL:
@@ -76,5 +77,5 @@ for e in tqdm(range(EPOCHS)):
         writer.add_scalar("Accuracy/valid", acc, global_step)
     model.train()
     dataset.train()
-    scheduler.step(acc)
+    # scheduler.step(acc)
 writer.close()

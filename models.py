@@ -66,8 +66,39 @@ class CNNv2(nn.Module):
         x = F.relu(self.bn3(self.maxp3(self.conv3(x))))
         x = F.relu(self.bn4(self.maxp4(self.conv4(x))))
         x = self.conv5(x)
-        x = self.avg_pool(x)
         x = F.relu(x)
+        x = self.avg_pool(x)
         x = self.flatten(x)
         x = self.linear(x)
+        return x
+
+
+class CNNv3(nn.Module):
+    ''' With inspiration from ChatGPT '''
+    def __init__(self):
+        super().__init__()
+        self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
+        self.conv1 = nn.Conv2d(1, 32, kernel_size=3, padding=1)
+        self.conv2 = nn.Conv2d(32, 32, kernel_size=3, padding=1)
+        self.drop1 = nn.Dropout2d(p=0.25)
+        self.conv3 = nn.Conv2d(32, 64, kernel_size=3, padding=1)
+        self.conv4 = nn.Conv2d(64, 64, kernel_size=3, padding=1)
+        self.drop2 = nn.Dropout2d(p=0.25)
+        self.fc1 = nn.Linear(64 * 32 * 32, 512)
+        self.drop3 = nn.Dropout(p=0.5)
+        self.fc2 = nn.Linear(512, NUM_CLASSES)
+
+    def forward(self, x):
+        x = F.relu(self.conv1(x))
+        x = F.relu(self.conv2(x))
+        x = self.pool(x)
+        x = self.drop1(x)
+        x = F.relu(self.conv3(x))
+        x = F.relu(self.conv4(x))
+        x = self.pool(x)
+        x = self.drop2(x)
+        x = x.view(-1, 64 * 32 * 32)
+        x = F.relu(self.fc1(x))
+        x = self.drop3(x)
+        x = self.fc2(x)
         return x

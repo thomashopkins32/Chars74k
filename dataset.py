@@ -12,12 +12,21 @@ class Chars74k(Dataset):
         self.labels = pd.read_csv('trainLabels.csv', index_col='ID')
         self.train_transform = tv.transforms.Compose(
             [
-                tv.transforms.RandomAffine(degrees=(8, 8), translate=(0.3, 0.3), scale=(1, 1.3)),
-                tv.transforms.RandomInvert(p=0.5),
+                tv.transforms.Resize((128, 128)),
+                tv.transforms.Grayscale(),
+                tv.transforms.RandomRotation(degrees=15),
                 tv.transforms.ToTensor(),
+                tv.transforms.Normalize((0.5,), (0.5,))
             ]
         )
-        self.test_transform = tv.transforms.ToTensor()
+        self.test_transform = tv.transforms.Compose(
+            [
+                tv.transforms.Resize((128, 128)),
+                tv.transforms.Grayscale(),
+                tv.transforms.ToTensor(),
+                tv.transforms.Normalize((0.5,), (0.5,))
+            ]
+        )
         self.idx_to_char = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
         self.char_to_idx = {c: i for i, c in enumerate(self.idx_to_char)}
         if test:

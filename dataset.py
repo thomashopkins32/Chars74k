@@ -14,7 +14,7 @@ class Chars74k(Dataset):
             [
                 tv.transforms.Resize((128, 128)),
                 tv.transforms.Grayscale(),
-                tv.transforms.RandomRotation(degrees=15),
+                tv.transforms.RandomAffine(degrees=15, translate=(0.1, 0.1), scale=(0.9, 1.2), shear=10),
                 tv.transforms.ToTensor(),
                 tv.transforms.Normalize((0.5,), (0.5,))
             ]

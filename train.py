@@ -12,14 +12,14 @@ from models import *
 from utils import *
 
 # PARAMETERS
-BATCH_SIZE = 32
+BATCH_SIZE = 128
 LR = 0.001
-WD = 0.0
+WD = 0.1
 MOMENTUM = 0.0
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 VALID_STEP = 10
-RNG = 32
-EPOCHS = 50
+RNG = 16
+EPOCHS = 500
 
 SHOW_MODEL = False
 SHOW_SAMPLES = False
@@ -34,7 +34,7 @@ train_loader = DataLoader(train_data, batch_size=BATCH_SIZE, shuffle=True, pin_m
 valid_loader = DataLoader(valid_data, batch_size=len(valid_data), shuffle=False, pin_memory=True)
 model = CNNv3().to(DEVICE)
 loss_func = nn.CrossEntropyLoss()
-optimizer = optim.Adam(model.parameters(), lr=LR)
+optimizer = optim.AdamW(model.parameters(), lr=LR, weight_decay=WD)
 #scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max')
 global_step = 0
 
